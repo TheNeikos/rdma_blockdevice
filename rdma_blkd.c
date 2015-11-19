@@ -31,7 +31,7 @@ static int rblk_cnt = 1;
 module_param(rblk_cnt, int, 0444);
 MODULE_PARM_DESC(rblk_cnt, "number of block devices to initialize (default: 1)");
 
-static int rblk_cap = 1024;
+static int rblk_cap = 1024*1024;
 module_param(rblk_cap, int, 0444);
 MODULE_PARM_DESC(rblk_cap, "number of bytes to allocate (default: 1MiB)");
 
