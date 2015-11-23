@@ -39,7 +39,7 @@ MODULE_PARM_DESC(rblk_cap, "number of bytes to allocate (default: 1MiB)");
 
 static char* rblk_remote_addr = "";
 module_param(rblk_remote_addr, charp, 0444);
-MODULE_PARM_DESC(rblk_remote_addr, "remote address to connecto to");
+MODULE_PARM_DESC(rblk_remote_addr, "remote address to connect to");
 
 static DEFINE_SPINLOCK(rblk_lock);
 
@@ -133,6 +133,11 @@ static int rblk_rdma_event_handler(struct rdma_cm_id* id,
                                    struct rdma_cm_event* event)
 {
     printk(KERN_INFO "rblk: Got rdma event: %d", event->event);
+    switch (event->event) {
+        case RDMA_CM_EVENT_ADDR_ERROR:
+            printk(KERN_ERR "rblk: Could not resolve addr %s", rblk_remote_addr);
+            break;
+    }
     return 0;
 }
 
