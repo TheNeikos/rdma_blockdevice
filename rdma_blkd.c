@@ -142,6 +142,13 @@ static int connect_rdma() {
         return ret;
     }
 
+    ret = rdma_resolve_addr(rdma_id, NULL, &addr, 500);
+
+    if (ret < 0) {
+        printk(KERN_ERR "rblk: Could not initiate resolve addr.");
+        return ret;
+    }
+
     return 0;
 }
 
