@@ -68,13 +68,13 @@ static void rblk_handle_request(struct request* req) {
     void* dest;
     unsigned long len;
     struct req_iterator iter;
-    struct bio_vec bvec;
+    struct bio_vec* bvec;
     unsigned long size = blk_rq_bytes(req);
     unsigned long offset;
     struct rblk_dev* dev = req->rq_disk->private_data;
 
     printk(KERN_INFO "rblk: About to handle %lu bytes at sector %lu", size,
-           req->bio->bi_iter.bi_sector);
+           req->bio->bi_sector);
 
     if (req->cmd_type != REQ_TYPE_FS) {
         req->errors++;
@@ -82,22 +82,22 @@ static void rblk_handle_request(struct request* req) {
         return;
     }
 
-    offset = req->bio->bi_iter.bi_sector*KERNEL_SECTOR_SIZE;
+    offset = req->bio->bi_sector*KERNEL_SECTOR_SIZE;
 
     rq_for_each_segment(bvec, req, iter) {
 
-        void* kaddr = kmap_atomic(bvec.bv_page);
+        void* kaddr = kmap_atomic(bvec->bv_page);
         if (rq_data_dir(req) == WRITE) {
             dest = dev->buffer+offset;
-            src  = kaddr+bvec.bv_offset;
+            src  = kaddr+bvec->bv_offset;
         } else {
-            dest = kaddr+bvec.bv_offset;
+            dest = kaddr+bvec->bv_offset;
             src  = dev->buffer+offset;
         }
 
-        len = bvec.bv_offset+bvec.bv_len > rblk_cap
-                ? rblk_cap - bvec.bv_offset
-                : bvec.bv_len;
+        len = bvec->bv_offset+bvec->bv_len > rblk_cap
+                ? rblk_cap - bvec->bv_offset
+                : bvec->bv_len;
 
         printk(KERN_INFO "rblk: %s %d bytes at %d\n",
                 (rq_data_dir(req) == WRITE ? "Writing" : "Reading"),
