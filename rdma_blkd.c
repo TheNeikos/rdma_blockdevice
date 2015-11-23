@@ -37,6 +37,10 @@ static int rblk_cap = 1024*1024;
 module_param(rblk_cap, int, 0444);
 MODULE_PARM_DESC(rblk_cap, "number of bytes to allocate (default: 1MiB)");
 
+static short rblk_remote_port = 1337;
+module_param(rblk_remote_port, short, 0444);
+MODULE_PARM_DESC(rblk_remote_port, "remote port to connect to");
+
 static char* rblk_remote_addr = "";
 module_param(rblk_remote_addr, charp, 0444);
 MODULE_PARM_DESC(rblk_remote_addr, "remote address to connect to");
@@ -135,7 +139,8 @@ static int rblk_rdma_event_handler(struct rdma_cm_id* id,
     printk(KERN_INFO "rblk: Got rdma event: %d", event->event);
     switch (event->event) {
         case RDMA_CM_EVENT_ADDR_ERROR:
-            printk(KERN_ERR "rblk: Could not resolve addr %s", rblk_remote_addr);
+            printk(KERN_ERR "rblk: Could not resolve addr %s:%d",
+                    rblk_remote_addr, rblk_remote_port);
             break;
     }
     return 0;
@@ -154,7 +159,7 @@ static int connect_rdma() {
 
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
-        .sin_port   = htons(1337),
+        .sin_port   = htons(rblk_remote_port),
         .sin_addr   = htonl(in_aton(rblk_remote_addr))
     };
 
