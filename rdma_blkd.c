@@ -1,25 +1,26 @@
 #include <linux/major.h>
 
-#include <linux/blkdev.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/fs.h>
 #include <linux/bio.h>
-#include <linux/stat.h>
+#include <linux/blkdev.h>
+#include <linux/compiler.h>
+#include <linux/debugfs.h>
+#include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/inet.h>
+#include <linux/init.h>
 #include <linux/ioctl.h>
-#include <linux/mutex.h>
-#include <linux/compiler.h>
-#include <linux/err.h>
 #include <linux/kernel.h>
-#include <linux/slab.h>
-#include <net/sock.h>
-#include <linux/net.h>
 #include <linux/kthread.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/net.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
 #include <linux/types.h>
-#include <linux/debugfs.h>
+#include <net/sock.h>
 #include <rdma/rdma_cm.h>
 
 #define KERNEL_SECTOR_SIZE 512
@@ -35,6 +36,10 @@ MODULE_PARM_DESC(rblk_cnt, "number of block devices to initialize (default: 1)")
 static int rblk_cap = 1024*1024;
 module_param(rblk_cap, int, 0444);
 MODULE_PARM_DESC(rblk_cap, "number of bytes to allocate (default: 1MiB)");
+
+static char* rblk_remote_addr = "";
+module_param(rblk_remote_addr, charp, 0444);
+MODULE_PARM_DESC(rblk_remote_addr, "remote address to connecto to");
 
 static DEFINE_SPINLOCK(rblk_lock);
 
@@ -141,6 +146,12 @@ static int connect_rdma() {
         printk(KERN_ERR "rblk: Could not create rdma id.");
         return ret;
     }
+
+    struct sockaddr_in addr = {
+        .sin_family = AF_INET,
+        .sin_port   = htons(1337),
+        .sin_addr   = htonl(in_aton(rblk_remote_addr))
+    };
 
     ret = rdma_resolve_addr(rdma_id, NULL, &addr, 500);
 
