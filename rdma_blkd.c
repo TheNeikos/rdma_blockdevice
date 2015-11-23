@@ -20,7 +20,7 @@
 #include <linux/kthread.h>
 #include <linux/types.h>
 #include <linux/debugfs.h>
-#include <rdma/rdma_cma.h>
+#include <rdma/rdma_cm.h>
 
 #define KERNEL_SECTOR_SIZE 512
 
@@ -47,6 +47,7 @@ struct rblk_dev {
 static int rblk_major;
 
 static struct rblk_dev* rblk_d;
+static struct rdma_cm_id* rdma_id;
 
 static int rblk_ioctl(struct block_device *bdev, fmode_t mode,
         unsigned int cmd, unsigned long arg)
@@ -123,17 +124,25 @@ __releases(q->queue_lock) __acquires(q->queue_lock)
     }
 }
 
+static int rblk_rdma_event_handler(struct rdma_cm_id* id,
+                                   struct rdma_cm_event* event)
+{
+    printk(KERN_INFO "rblk: Got rdma event: %d", event->event);
+    return 0;
+}
+
 static int connect_rdma() {
     int ret;
-    struct rdma_addrinfo hints;
-    struct tdma_addrinfo* res;
 
-    ret = rdma_getaddrinfo(NULL, 1337, &hints, &res);
+    rdma_id = rdma_create_id(rblk_rdma_event_handler, NULL,
+                             RDMA_PS_IB, IB_QPT_SMI);
 
-    if (ret < 0) {
-        printk(KERN_ERR "rblk: Could not getaddrinfo");
+    if (!rdma_id) {
+        printk(KERN_ERR "rblk: Could not create rdma id.");
         return ret;
     }
+
+    return 0;
 }
 
 static int __init rblk_init(void)
