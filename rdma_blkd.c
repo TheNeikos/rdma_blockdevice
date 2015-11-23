@@ -20,6 +20,7 @@
 #include <linux/kthread.h>
 #include <linux/types.h>
 #include <linux/debugfs.h>
+#include <rdma/rdma_cma.h>
 
 #define KERNEL_SECTOR_SIZE 512
 
@@ -122,6 +123,19 @@ __releases(q->queue_lock) __acquires(q->queue_lock)
     }
 }
 
+static int connect_rdma() {
+    int ret;
+    struct rdma_addrinfo hints;
+    struct tdma_addrinfo* res;
+
+    ret = rdma_getaddrinfo(NULL, 1337, &hints, &res);
+
+    if (ret < 0) {
+        printk(KERN_ERR "rblk: Could not getaddrinfo");
+        return ret;
+    }
+}
+
 static int __init rblk_init(void)
 {
     int i;
@@ -183,6 +197,10 @@ static int __init rblk_init(void)
         sprintf(disk->disk_name, "rblk%d", i);
         add_disk(disk);
         set_capacity(disk, rblk_cap/KERNEL_SECTOR_SIZE);
+    }
+
+    if (connect_rdma() < 0) {
+        goto out_free;
     }
 
     return 0;
