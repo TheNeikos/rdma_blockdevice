@@ -99,9 +99,9 @@ static void rblk_handle_request(struct request* req) {
                 ? rblk_cap - bvec->bv_offset
                 : bvec->bv_len;
 
-        printk(KERN_INFO "rblk: %s %d bytes at %d\n",
-                (rq_data_dir(req) == WRITE ? "Writing" : "Reading"),
-                len, offset);
+        // printk(KERN_INFO "rblk: %s %d bytes at %d\n",
+        //         (rq_data_dir(req) == WRITE ? "Writing" : "Reading"),
+        //         len, offset);
         memcpy(dest, src, len);
         kunmap_atomic(kaddr);
         offset += len;
@@ -116,11 +116,11 @@ __releases(q->queue_lock) __acquires(q->queue_lock)
     struct request* req;
     unsigned long flags;
 
-    printk(KERN_INFO "rblk: Got request(s) \n");
+    // printk(KERN_INFO "rblk: Got request(s) \n");
     while ((req = blk_fetch_request(q)) != NULL) {
-        printk(KERN_INFO "rblk: Handling request \n");
+        // printk(KERN_INFO "rblk: Handling request \n");
         rblk_handle_request(req);
-        printk(KERN_INFO "rblk: Handled request \n");
+        // printk(KERN_INFO "rblk: Handled request \n");
     }
 }
 
